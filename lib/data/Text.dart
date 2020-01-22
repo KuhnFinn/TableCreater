@@ -9,6 +9,9 @@ const String str_minutes ="Minuten";
 const String str_stay = "Bleiben";
 const String str_leave = "Verlassen";
 
+const String str_clock="Uhr";
+const String str_at="um";
+
 const List<String> str_weekdays = ["Montag","Dienstag","Mittwoch", "Donnerstag","Freitag","Samstag", "Sonntag"];
 const String str_titelCreateSchedule = "Konfiguration";
 const List<String> str_lists_sports = ["Andere", "Fußball", "Faustball", "Tennis", "Volleyball"];
@@ -40,7 +43,7 @@ const String str_err_untilPlace_toMuch ="Es sind maximal so viele Platzierungen 
 const String str_doubleRoundEnabled ="Hin-und Rückrunde";
 const String str_refereeExtern="Externer Schiedsrichter";
 const String str_winCondition = "Siegbedingung";
-const List<String> str_list_winCondition=["Spiel nach Zeit","Spiel nach Sätzen" ];
+const List<String> str_list_winCondition=[ "Spiel nach Zeit","Spiel nach Sätzen" ];
 const String str_duration="Dauer";
 const String str_err_duration="Bitte eine Dauer auswählen";
 const String str_durationInMinutes="Dauer in Minuten";
@@ -57,3 +60,9 @@ const String str_alertCancelMessage ="Wirklich abbrechen? Alle bereits eingegebe
 const String str_halftime = "Halbzeit";
 const String str_halftimeDuration = "Halbzeitdauer";
 const String str_err_halftimeDuration = "Bitte eine Halbzeitdauer auswählen";
+
+const String str_timeOfDay ="Uhrzeit";
+const String str_firstTeam ="Team 1";
+const String str_secondTeam ="Team 2";
+const String str_points ="Pkt.";
+const String str_referee="Schieds.";

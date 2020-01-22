@@ -3,8 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:flutter_app/Schedule/Championship.dart';
-import 'package:flutter_app/Schedule/KoTournament.dart';
+
 import 'package:flutter_app/data/Text.dart';
 import 'package:flutter_app/Schedule/Schedule.dart';
 import 'package:flutter_app/main.dart';
@@ -47,7 +46,7 @@ class CreateScheduleState extends State<CreateSchedule> {
 
     _tabsVal = [false, false, false, false];
 
-    actSchedule = new Schedule.empty();
+    actSchedule = new Schedule();
 
     _teams = rebuildTeams();
 
@@ -153,9 +152,7 @@ class CreateScheduleState extends State<CreateSchedule> {
                 scrollDirection: Axis.vertical,
               ),
             ),
-            IconButton(
-              icon: Icon(Icons.add),
-            ),
+
           ],
         ),
       ),
@@ -185,13 +182,13 @@ class CreateScheduleState extends State<CreateSchedule> {
                   switch (str_list_tournamentType.indexOf(newValue)) {
                     case 0:
                       setState(() {
-                        actSchedule.setActChampionship = new Championship();
+                        actSchedule.tournamentType = str_list_tournamentType[0];
                         actTournamentForm = buildChampForm();
                       });
                       break;
                     case 1:
                       setState(() {
-                        actSchedule.setActKoTorunament = new KoTournament();
+                        actSchedule.tournamentType = str_list_tournamentType[1];
                         actTournamentForm = buildKoForm();
                       });
                       break;
@@ -267,6 +264,7 @@ class CreateScheduleState extends State<CreateSchedule> {
             child: _tabs[_selectedTab],
             key: _formKey,
           ),
+          resizeToAvoidBottomInset: false,
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.check),
             backgroundColor: Colors.green,
@@ -348,7 +346,7 @@ class CreateScheduleState extends State<CreateSchedule> {
                     content: Text(str_alertCancelMessage),
                     actions: <Widget>[
                       FlatButton(
-                        child: Text(str_stay),
+                        child: Text(str_leave),
                         onPressed: () {
                           Navigator.of(context).pop();
                           returnValue = true;
@@ -356,7 +354,7 @@ class CreateScheduleState extends State<CreateSchedule> {
                       ),
                       FlatButton(
                         child: Text(
-                          str_leave,
+                          str_stay,
                           style: TextStyle(color: Colors.white),
                         ),
                         color: Colors.indigo,
@@ -639,10 +637,10 @@ class CreateScheduleState extends State<CreateSchedule> {
                 padding: const EdgeInsets.all(4.0),
                 child: CheckboxListTile(
                   title: Text(str_groupsEnables),
-                  value: actSchedule.actKoTournament.groupsEnable,
+                  value: actSchedule.groupsEnable,
                   key: UniqueKey(),
                   onChanged: (bool pvalue) {
-                    actSchedule.actKoTournament.groupsEnable = pvalue;
+                    actSchedule.groupsEnable = pvalue;
                     setState(() {
                       actTournamentForm = buildKoForm();
                     });
@@ -652,7 +650,7 @@ class CreateScheduleState extends State<CreateSchedule> {
             ],
           ),
         ),
-        actSchedule.actKoTournament.groupsEnable
+        actSchedule.groupsEnable
             ? Column(
                 children: <Widget>[
                   Padding(
@@ -668,15 +666,15 @@ class CreateScheduleState extends State<CreateSchedule> {
                       ),
                       keyboardType: TextInputType.number,
                       initialValue:
-                          (actSchedule.actKoTournament.groupQuantity == null)
+                          (actSchedule.groupQuantity == null)
                               ? ""
-                              : actSchedule.actKoTournament.groupQuantity
+                              : actSchedule.groupQuantity
                                   .toString(),
                       onChanged: (value) {
                         if (value.isEmpty) {
-                          actSchedule.actKoTournament.groupQuantity = null;
+                          actSchedule.groupQuantity = null;
                         } else {
-                          actSchedule.actKoTournament.groupQuantity =
+                          actSchedule.groupQuantity =
                               int.parse(value);
                         }
                       },
@@ -712,15 +710,15 @@ class CreateScheduleState extends State<CreateSchedule> {
                       ),
                       keyboardType: TextInputType.number,
                       initialValue:
-                          (actSchedule.actKoTournament.koRoundQuantity == null)
+                          (actSchedule.koRoundQuantity == null)
                               ? ""
-                              : actSchedule.actKoTournament.koRoundQuantity
+                              : actSchedule.koRoundQuantity
                                   .toString(),
                       onChanged: (value) {
                         if (value.isEmpty) {
-                          actSchedule.actKoTournament.koRoundQuantity = null;
+                          actSchedule.koRoundQuantity = null;
                         } else {
-                          actSchedule.actKoTournament.koRoundQuantity =
+                          actSchedule.koRoundQuantity =
                               int.parse(value);
                         }
                       },
@@ -755,15 +753,15 @@ class CreateScheduleState extends State<CreateSchedule> {
                         labelText: str_untilPlace,
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue: (actSchedule.actKoTournament.untilPlace ==
+                      initialValue: (actSchedule.untilPlace ==
                               null)
                           ? ""
-                          : actSchedule.actKoTournament.untilPlace.toString(),
+                          : actSchedule.untilPlace.toString(),
                       onChanged: (value) {
                         if (value.isEmpty) {
-                          actSchedule.actKoTournament.untilPlace = null;
+                          actSchedule.untilPlace = null;
                         } else {
-                          actSchedule.actKoTournament.untilPlace =
+                          actSchedule.untilPlace =
                               int.parse(value);
                         }
                       },
@@ -801,10 +799,10 @@ class CreateScheduleState extends State<CreateSchedule> {
           padding: const EdgeInsets.all(4.0),
           child: CheckboxListTile(
             title: Text(str_doubleRoundEnabled),
-            value: actSchedule.actChampionship.doubleRound,
+            value: actSchedule.doubleRound,
             key: UniqueKey(),
             onChanged: (bool pvalue) {
-              actSchedule.actChampionship.doubleRound = pvalue;
+              actSchedule.doubleRound = pvalue;
               setState(() {
                 actTournamentForm = buildChampForm();
               });

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_app/Routes/CreateSchedule.dart';
+import 'package:flutter_app/Routes/ScheduleOverview.dart';
 import 'package:flutter_app/data/Text.dart';
 import 'package:flutter_app/Schedule/Schedule.dart';
 
-List<Schedule> allSchedules =  [];
+import 'Util.dart';
+
+List<Schedule> allSchedules = [];
 
 void main() => runApp(MyApp());
 
@@ -16,6 +20,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.indigo,
       ),
       home: MyHomePage(title: str_app_titel),
+      routes: {
+        ScheduleOverview.routeName: (context) => ScheduleOverview(),
+      },
     );
   }
 }
@@ -30,27 +37,20 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   @override
   void initState() {
-    Schedule tab1 = new Schedule(
-        "Spieltag 2",
-        new DateTime(2019, 12, 9, 12, 10),
-        str_lists_sports[4]);
-    allSchedules.add(tab1);
+    allSchedules.add(Schedule.bsp());
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
       body: ListView(
-        children:
-          createCardList(),
+        children: createCardList(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -64,15 +64,33 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  List<Widget> createCardList(){
+  List<Widget> createCardList() {
     List<Widget> allCards = [];
-    if(allSchedules.isNotEmpty) {
-      allSchedules.forEach((sched) => allCards.add(sched.generateCard()));
-    }
-    else{
-      allCards =[
-        Text("Es gibt noch keinen Plan")
-      ];
+    if (allSchedules.isNotEmpty) {
+      allSchedules.forEach((sched) {
+        allCards.add(Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Card(
+            clipBehavior: Clip.antiAlias,
+              child: InkWell(
+            child: Column(
+              children: <Widget>[
+                Image.asset(sched.getSportPicturePath()),
+                ListTile(
+                  title: Text(sched.name),
+                  subtitle: Text(formatDate(sched.start)),
+                ),
+              ],
+            ),
+            onTap: () {
+              Navigator.pushNamed(context, ScheduleOverview.routeName,
+                  arguments: ScreenArguments(sched));
+            },
+          )),
+        ));
+      });
+    } else {
+      allCards = [Text("Es gibt noch keinen Plan")];
     }
     return allCards;
   }

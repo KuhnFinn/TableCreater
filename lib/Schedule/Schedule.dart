@@ -1,59 +1,106 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_app/Schedule/Championship.dart';
-import 'package:flutter_app/Schedule/KoTournament.dart';
+import 'package:flutter_app/Graph.dart';
+import 'package:flutter_app/Schedule/Game.dart';
+import 'package:flutter_app/Schedule/MatchDay.dart';
+import 'package:flutter_app/Schedule/Round.dart';
 import 'package:flutter_app/data/Text.dart';
-import 'package:flutter_app/Util.dart';
 
+class Schedule {
+  String name;
 
-class Schedule{
-  String name = "";
   DateTime start;
-  String sport = str_lists_sports[0];
+  String sport;
 
   List<String> teams;
 
-  KoTournament actKoTournament = KoTournament();
-  Championship actChampionship = Championship();
-  String tournamentType = str_list_tournamentType[0];
+  String tournamentType;
+  bool doubleRound;
 
-  bool externRefery=true;
-  Duration gameDuration = new Duration(minutes: 15);
-  bool halftime = true;
-  Duration halftimeDuration = new Duration(minutes: 5);
-  String winCondition = str_list_winCondition[0];
-  String setType = str_list_setType[0];
+  bool groupsEnable;
+
+  List<String> groups;
+  int groupQuantity;
+
+  int koRoundQuantity;
+  int untilPlace;
+
+  bool externRefery;
+  Duration gameDuration;
+  bool halftime;
+  Duration halftimeDuration;
+  String winCondition;
+
+  String setType;
   int setQuantity;
   int pointsToWin;
 
+  List<MatchDay> matchDays ;
 
+  Schedule(
+      {this.name = "",
+      this.start,
+      this.sport,
+      this.teams,
+      this.tournamentType,
+      this.doubleRound = false,
+      this.groupsEnable = false,
+      this.groups,
+      this.groupQuantity,
+      this.koRoundQuantity,
+      this.untilPlace,
+      this.externRefery = true,
+      this.gameDuration = const Duration(minutes: 15),
+      this.halftime = true,
+      this.halftimeDuration = const Duration(minutes: 5),
+      this.winCondition,
+      this.setType,
+      this.setQuantity,
+      this.pointsToWin,
+      this.matchDays}) {
 
-  Schedule(String pName, DateTime pStart, String pSport){
-    this.name = pName;
-    this.start = pStart;
-    this.sport =pSport;
-  }
-  Schedule.empty(){
-    teams=[""];
-    tournamentType=str_list_tournamentType[0];
+    if (this.sport == null) {
+      this.sport = str_lists_sports[0];
+    }
+    if (this.tournamentType == null) {
+      this.tournamentType = str_list_tournamentType[0];
+    }
+    if (this.winCondition == null) {
+      this.winCondition = str_list_winCondition[0];
+    }
+    if (this.setType == null) {
+      this.setType = str_list_setType[0];
+    }
+    if (this.matchDays == null) {
+      this.matchDays = [];
+    }
+    if (this.teams == null) {
+      this.teams = [];
+    }
   }
 
-  Widget generateCard(){
-    return Padding(padding:const EdgeInsets.all(4.0),
-    child: Card(
-      child: Column(
-        children: <Widget>[
-          Image.asset(_getSportPicturePath()),
-          ListTile(
-            title:  Text(name),
-            subtitle: Text(formatDate(start)),
-          ),
-        ],
-      ),
-    ),);
+  Schedule.bsp() {
+    this.name = "test1";
+    this.start = DateTime.now();
+    this.sport = str_lists_sports[2];
+    this.teams = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    this.koRoundQuantity = 2;
+    this.untilPlace = 6;
+    this.groupQuantity = 2;
+    this.groupsEnable = true;
+    this.doubleRound = false;
+    this.externRefery = true;
+    this.gameDuration = Duration(minutes: 20);
+    this.halftime = true;
+    this.halftimeDuration = Duration(minutes: 3);
+    this.winCondition = str_list_winCondition[0];
+    this.matchDays=[];
+    this.matchDays.add(new MatchDay(this.start, [new Round(this.start, [Fixture("Team A", "TeamB", "schiri"),Fixture("Team A", "TeamB", "schiri"),Fixture("Team A", "TeamB", "schiri"),])]));
+
+    buildChamionchipFixtures();
   }
-  String _getSportPicturePath(){
+
+  String getSportPicturePath() {
     String returnPath;
-    switch(str_lists_sports.indexOf(sport)){
+    switch (str_lists_sports.indexOf(sport)) {
       case 0:
         returnPath = 'assets/images/Unknown.png';
         break;
@@ -73,26 +120,25 @@ class Schedule{
     return returnPath;
   }
 
-  set setActKoTorunament(KoTournament newTournament){
-    actKoTournament = newTournament;
-    tournamentType = str_list_tournamentType[1];
-  }
+  void configurationDone() {}
 
-  set setActChampionship(Championship newChampionship){
-    actChampionship = newChampionship;
-    tournamentType = str_list_tournamentType[0];
-  }
+  void buildChamionchipFixtures() {
+    Graph acGraph;
+    List<Node> allTeamNodes = [];
 
-  void configurationDone(){
-    switch(str_list_tournamentType.indexOf(tournamentType)){
-      case 0:
-        actChampionship.teams = teams;
-        break;
-      case 1:
-        actKoTournament.teams = teams;
-        break;
+    teams.forEach((acTeam) {
+      allTeamNodes.add(Node(acTeam));
+    });
+    acGraph = new Graph(allTeamNodes, []);
+    acGraph.completeGraph();
+
+    Edge acEdge;
+    for (int i = 0; i < acGraph.edges.length; i++) {
+      acEdge = acGraph.getMinNotMarkedEdge();
+      acGraph.markEdge(acEdge);
+      matchDays[0].rounds.add(new Round(this.start,[new Fixture(acEdge.firstNode.name, acEdge.secondNode.name, "schiri")]));
     }
+
+    var lol = acGraph.edges[0];
   }
 }
-
-
