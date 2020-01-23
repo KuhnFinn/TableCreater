@@ -4,6 +4,44 @@ class Graph{
 
   Graph(this.nodes,this.edges);
 
+  ///Checks if all Edges in the graph are marked
+  bool isEveryEdgeMarked(){
+    return edges.every((acEdge){
+      return acEdge.marked;
+    });
+  }
+
+  ///Checks if the Node [firstNode] is connected to the Node [secondNode]
+  ///
+  /// Doesn´t mind direction
+  bool isConnected(Node firstNode,Node secondNode){
+    return edges.any((acEdge){
+      return (acEdge.firstNode==firstNode&&acEdge.secondNode==secondNode)||(acEdge.firstNode==secondNode&&acEdge.secondNode==firstNode);
+    });
+  }
+///Checks if the Node with index [firstNodeIndex] is connected to the Node with index [secondNodeIndex]
+  ///
+  /// Doesn´t mind direction
+  bool isConnectedByIndex(int firstNodeIndex, int secondNodeIndex){
+    return isConnected(this.nodes[firstNodeIndex], this.nodes[secondNodeIndex]);
+  }
+
+  ///Returns the Edge with the given Nodes
+  Edge getEdge(Node firstNode, Node secondNode){
+    return getEdgeByIndex(this.nodes.indexOf(firstNode), this.nodes.indexOf(secondNode));
+  }
+
+  ///Returns the Edge with the given Nodes with [firstNodeIndex] and [secondNodeIndex]
+  Edge getEdgeByIndex(int firstNodeIndex, int secondNodeIndex){
+    Edge returnEdge;
+    this.edges.forEach((acEdge){
+      if((acEdge.firstNode==this.nodes[firstNodeIndex]&&acEdge.secondNode==this.nodes[secondNodeIndex])||(acEdge.secondNode==this.nodes[firstNodeIndex]&&acEdge.firstNode==this.nodes[secondNodeIndex])){
+        returnEdge= acEdge;
+      }
+    });
+    return returnEdge;
+  }
+
   ///Marks [edgeMark] in the edgesList
   ///
   /// When [edgeMark] is not part of the List, nothing happens
@@ -66,13 +104,78 @@ class Graph{
       }
     }
   }
+
+  ///Returns [qunatity] subgraphes
+  ///
+  /// The nodes in the subgraphes should have a similar degree
+  List<Graph> getSubgraphs(int quantity){
+    int index=0;
+    List<Graph> subgraphs=[];
+
+    for(int i =0;i<quantity;i++){
+      List<Node> newNodes =[];
+      this.nodes.forEach((acNode){
+        newNodes.add(new Node(acNode.name));
+      });
+      subgraphs.add(Graph(newNodes,[]));
+    }
+    while(!isEveryEdgeMarked()){
+      Node choosenFirstNode;
+      Node choosenSecondNode;
+      subgraphs[index].nodes.forEach((acfirstNode){
+          if(this.nodes[subgraphs[index].nodes.indexOf(acfirstNode)].value<this.nodes.length-1){
+            if(choosenFirstNode==null){
+              choosenFirstNode=acfirstNode;
+            }
+            else{
+              if(acfirstNode.degree<choosenFirstNode.degree){
+                choosenFirstNode=acfirstNode;
+              }
+              else if(acfirstNode.degree==choosenFirstNode.degree){
+                if(this.nodes[subgraphs[index].nodes.indexOf(acfirstNode)].value>this.nodes[subgraphs[index].nodes.indexOf(choosenFirstNode)].value){
+                  choosenFirstNode=acfirstNode;
+                }
+              }
+            }
+          }
+      });
+      subgraphs[index].nodes.forEach((acSecondNode){
+        if(acSecondNode!=choosenFirstNode){
+          if(!getEdgeByIndex(subgraphs[index].nodes.indexOf(acSecondNode), subgraphs[index].nodes.indexOf(choosenFirstNode)).marked){
+            if(this.nodes[subgraphs[index].nodes.indexOf(acSecondNode)].value<this.nodes.length-1){
+              if(choosenSecondNode==null){
+                choosenSecondNode=acSecondNode;
+              }
+              else{
+                if(acSecondNode.degree<choosenSecondNode.degree){
+                  choosenSecondNode=acSecondNode;
+                }
+                else if(acSecondNode.degree==choosenSecondNode.degree){
+                  if(this.nodes[subgraphs[index].nodes.indexOf(acSecondNode)].value>this.nodes[subgraphs[index].nodes.indexOf(choosenSecondNode)].value){
+                    choosenSecondNode=acSecondNode;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+      subgraphs[index].edges.add(new Edge(choosenFirstNode, choosenSecondNode));
+      this.markEdge(getEdgeByIndex(subgraphs[index].nodes.indexOf(choosenFirstNode), subgraphs[index].nodes.indexOf(choosenSecondNode)));
+      index =(index+1)%quantity;
+    }
+    return subgraphs;
+  }
 }
 
 class Node{
   String name;
   int value;
+  int degree;
 
-  Node(this.name, [this.value=0]);
+  Node(this.name, [this.value=0]){
+    this.degree=0;
+  }
 }
 
 class Edge{
@@ -82,7 +185,10 @@ class Edge{
   bool marked;
   int value;
 
-  Edge(this.firstNode, this.secondNode, [this.direction= false, this.marked=false, this.value=0]);
+  Edge(this.firstNode, this.secondNode, [this.direction= false, this.marked=false, this.value=0]){
+    this.firstNode.degree++;
+    this.secondNode.degree++;
+  }
 
   ///Checks if [toTest] is part of the Edge
   bool isNodeLinked(Node toTest){
@@ -90,6 +196,11 @@ class Edge{
       return true;
     }
     return false;
+  }
+
+  ///Returns the added Degree from the two connected Nodes
+  int getDegreeOfNodes(){
+    return firstNode.degree+secondNode.degree;
   }
 
   ///Updates the value of the Edge

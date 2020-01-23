@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'package:flutter_app/Schedule/MatchDay.dart';
 import 'package:flutter_app/Schedule/Schedule.dart';
+import 'package:flutter_app/Util.dart';
 import 'package:flutter_app/data/Text.dart';
 
 class ScheduleOverview extends StatefulWidget {
@@ -15,6 +16,7 @@ class ScheduleOverview extends StatefulWidget {
 
 class ScheduleOverviewState extends State<ScheduleOverview> {
   Schedule acSchedule;
+  List<bool> cardCollapsed = [];
 
   @override
   void initState() {
@@ -35,16 +37,41 @@ class ScheduleOverviewState extends State<ScheduleOverview> {
 
   List<Card> buildCardList() {
     List<Card> matchDayList = [];
-    acSchedule.matchDays.forEach((acMatchday) {
+    for (int i = 0; i < acSchedule.matchDays.length; i++) {
+      cardCollapsed.add(true);
       matchDayList.add(Card(
-        child: buildGameUI(acMatchday),
-      ));
-    });
+          child: Column(
+        children: <Widget>[
+          ListTile(
+            title: Text(acSchedule.matchDays[i].name),
+            subtitle: Text(formatDate(acSchedule.matchDays[i].start)),
+            trailing: Icon(cardCollapsed[i]?Icons.keyboard_arrow_down:Icons.keyboard_arrow_up),
+            onTap: () {
+              setState(() {
+                cardCollapsed[i] = !cardCollapsed[i];
+              });
+            },
+          ),
+          (cardCollapsed[i])
+              ? Container()
+              : Column(
+                  children: <Widget>[
+                    Divider(),
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: buildGameUI(acSchedule.matchDays[i]),
+                    ),
+                  ],
+                )
+        ],
+      )));
+    }
     return matchDayList;
   }
 
   Widget buildGameUI(MatchDay acMatchday) {
     return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       child: DataTable(
         columnSpacing: 0,
         horizontalMargin: 10,
@@ -69,15 +96,16 @@ class ScheduleOverviewState extends State<ScheduleOverview> {
           DataCell(Text("${acRound.start.hour}:${acRound.start.minute}")),
           DataCell(Text(acFixture.team1)),
           DataCell(Padding(
-            padding: const EdgeInsets.only(top: 6.0),
+            padding: const EdgeInsets.only(top: 6.0, left: 4.0, right: 4.0),
             child: Container(
               width: 54,
               child: TextFormField(
                 maxLength: 3,
                 decoration: InputDecoration(
                     border: OutlineInputBorder(), counter: SizedBox.shrink()),
-                initialValue:
-                (acFixture.pointsTeam1 != null) ? acFixture.pointsTeam1.toString() : "",
+                initialValue: (acFixture.pointsTeam1 != null)
+                    ? acFixture.pointsTeam1.toString()
+                    : "",
                 onChanged: (value) {
                   if (value.isEmpty) {
                     acFixture.pointsTeam1 = null;
@@ -94,15 +122,16 @@ class ScheduleOverviewState extends State<ScheduleOverview> {
           )),
           DataCell(Text(acFixture.team2)),
           DataCell(Padding(
-            padding: const EdgeInsets.only(top: 6.0),
+            padding: const EdgeInsets.only(top: 6.0, left: 4.0, right: 4.0),
             child: Container(
               width: 54,
               child: TextFormField(
                 maxLength: 3,
                 decoration: InputDecoration(
                     border: OutlineInputBorder(), counter: SizedBox.shrink()),
-                initialValue:
-                (acFixture.pointsTeam2 != null) ? acFixture.pointsTeam2.toString() : "",
+                initialValue: (acFixture.pointsTeam2 != null)
+                    ? acFixture.pointsTeam2.toString()
+                    : "",
                 onChanged: (value) {
                   if (value.isEmpty) {
                     acFixture.pointsTeam2 = null;

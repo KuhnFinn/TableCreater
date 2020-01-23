@@ -92,8 +92,7 @@ class Schedule {
     this.halftime = true;
     this.halftimeDuration = Duration(minutes: 3);
     this.winCondition = str_list_winCondition[0];
-    this.matchDays=[];
-    this.matchDays.add(new MatchDay(this.start, [new Round(this.start, [Fixture("Team A", "TeamB", "schiri"),Fixture("Team A", "TeamB", "schiri"),Fixture("Team A", "TeamB", "schiri"),])]));
+    this.matchDays=[new MatchDay(this.start,[],"Spieltag 1"),new MatchDay(this.start,[], "Spieltag 2")];
 
     buildChamionchipFixtures();
   }
@@ -119,26 +118,59 @@ class Schedule {
     }
     return returnPath;
   }
+/// builds the whole Schedule when the Configuration is done
+  void configurationDone() {
+    switch(str_list_tournamentType.indexOf(this.tournamentType)){
+      case 0:
+        buildChamionchipFixtures();
+        break;
+      case 1:
+        buildKoFxtures();
+        break;
+    }
+  }
 
-  void configurationDone() {}
-
+  ///creates all Fixtures for the given configuration to play a championship
   void buildChamionchipFixtures() {
     Graph acGraph;
     List<Node> allTeamNodes = [];
+    List<Graph> matchDayGraph =[];
 
     teams.forEach((acTeam) {
       allTeamNodes.add(Node(acTeam));
     });
     acGraph = new Graph(allTeamNodes, []);
     acGraph.completeGraph();
+    matchDayGraph = acGraph.getSubgraphs(this.matchDays.length);
 
-    Edge acEdge;
-    for (int i = 0; i < acGraph.edges.length; i++) {
-      acEdge = acGraph.getMinNotMarkedEdge();
-      acGraph.markEdge(acEdge);
-      matchDays[0].rounds.add(new Round(this.start,[new Fixture(acEdge.firstNode.name, acEdge.secondNode.name, "schiri")]));
+    for(int i=0; i<this.matchDays.length;i++){
+      Graph acSubgraph = matchDayGraph[i];
+      while(!acSubgraph.isEveryEdgeMarked()){
+        Edge nextEdgeToMark;
+        acSubgraph.edges.forEach((acEdge){
+          if(!acEdge.marked){
+            if(nextEdgeToMark==null){
+              nextEdgeToMark=acEdge;
+            }
+            else{
+              if(acEdge.value<nextEdgeToMark.value){
+                nextEdgeToMark=acEdge;
+              }
+              else if(acEdge.value==nextEdgeToMark.value){
+                if(acEdge.getDegreeOfNodes()>nextEdgeToMark.getDegreeOfNodes()){
+                  nextEdgeToMark=acEdge;
+                }
+              }
+            }
+          }
+        });
+        acSubgraph.markEdge(nextEdgeToMark);
+        this.matchDays[i].rounds.add(new Round(this.start, [new Fixture(nextEdgeToMark.firstNode.name, nextEdgeToMark.secondNode.name, "schiri")]));
+      }
     }
+  }
+  ///creates all Fixtures for the given configuration to play a KO-Tournament
+  void buildKoFxtures(){
 
-    var lol = acGraph.edges[0];
   }
 }
