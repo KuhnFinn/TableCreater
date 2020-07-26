@@ -1,38 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/data/Text.dart';
 
-String formatDate(DateTime Date) {
+///Formats a String for a german representation of the given [date]
+String formatDate(DateTime date) {
   String returnDate = "";
-  if (Date != null) {
-    switch (Date.difference((DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))).inDays)
+  if (date != null) {
+    switch (date.difference((DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day))).inDays)
     {case 0:
-        returnDate = "$str_today $str_at ${Date.hour.toString()}:${Date.minute
-            .toString()} $str_clock";
+        returnDate = "$str_today $str_at ${date.hour.toString()}:${date.minute<10 ?"0":""+date.minute.toString()} $str_clock";
         break;
       case 1:
         returnDate =
-        "$str_tomorrow $str_at ${Date.hour.toString()}:${Date.minute
-            .toString()} $str_clock";
+        "$str_tomorrow $str_at ${date.hour.toString()}:${date.minute<10 ?"0":""+date.minute.toString()} $str_clock";
         break;
       default:
         returnDate =
-        "${str_weekdays[Date.weekday - 1]}, ${Date.day.toString()}.${Date.month
-            .toString()}.${Date.year.toString()}";
+        "${str_weekdays[date.weekday - 1]}, ${date.day.toString()}.${date.month
+            .toString()}.${date.year.toString()}";
     }
   }
   return returnDate;
 }
-
+///Formats a String for a german representation of the given [dur]
 String formatDuration(Duration dur) {
-  String returnDur = "${dur.inHours}:" +
-      ((dur.inMinutes - (dur.inHours) * 60 < 10) ? "0" : "") +
-      "${dur.inMinutes - (dur.inHours) * 60} h";
+  String returnDur = "${dur.inHours}:" + ((dur.inMinutes - (dur.inHours) * 60 < 10) ? "0" : "") + "${dur.inMinutes - (dur.inHours) * 60} h";
   if (dur.inHours < 1) {
     returnDur = "${dur.inMinutes} " + str_minutes;
   }
   return returnDur;
 }
 
+///Formats a String for a german representation of the given [time]
+String formatClockTime(DateTime time){
+  return "${(time.hour<10?"0":"")+time.hour.toString()}:${(time.minute<10?"0":"")+time.minute.toString()}";
+}
+
+///shows a Picker to pick a Date
 Future<DateTime> selectDate(var context) {
   return showDatePicker(
       context: context,
@@ -43,6 +46,7 @@ Future<DateTime> selectDate(var context) {
       locale: Localizations.localeOf(context));
 }
 
+///shows a Picker to pick a Time
 Future<TimeOfDay> selectTime(var context) {
   return showTimePicker(
     context: context,

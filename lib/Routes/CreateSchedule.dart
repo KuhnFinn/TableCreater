@@ -1,12 +1,12 @@
+import 'package:flutter_app/Schedule/MatchDay.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 import 'package:flutter_app/data/Text.dart';
 import 'package:flutter_app/Schedule/Schedule.dart';
-import 'package:flutter_app/main.dart';
+import 'package:flutter_app/Routes/main.dart';
 import 'package:flutter_app/Util.dart';
 
 class CreateSchedule extends StatefulWidget {
@@ -16,6 +16,7 @@ class CreateSchedule extends StatefulWidget {
 
 class CreateScheduleState extends State<CreateSchedule> {
   var startDateTextController = new TextEditingController();
+  List<TextEditingController> dateController = [new TextEditingController()];
   var durationTextController = new TextEditingController();
   var halftimeDurationTextController = new TextEditingController();
   Schedule actSchedule;
@@ -23,13 +24,16 @@ class CreateScheduleState extends State<CreateSchedule> {
   Widget actTournamentForm;
   Widget actGameSettingsForm;
 
+  List<Widget> actMatchDays;
   List<Color> _tabsColor;
   List<bool> _tabsVal;
   List<Widget> _teams;
 
-  static final _formKey = new GlobalKey<FormState>();
+  static final _globalFormKey = new GlobalKey<FormState>();
+  static final _matchDayFormKey = new GlobalKey<FormState>();
 
   static final Key _k1 = UniqueKey();
+  static final Key _k2 = UniqueKey();
 
   String title;
 
@@ -46,19 +50,22 @@ class CreateScheduleState extends State<CreateSchedule> {
 
     _tabsVal = [false, false, false, false];
 
-    actSchedule = new Schedule();
+    actSchedule = new Schedule(matchDays: [
+      MatchDay(null, [], "Spieltag 1", 1),
+    ]);
 
     _teams = rebuildTeams();
 
     actTournamentForm = buildChampForm();
     actGameSettingsForm = buildTimeForm();
+    actMatchDays = buildMatchdays();
   }
 
   @override
   Widget build(BuildContext context) {
     var _tabs = [
       Container(
-        child: Column(
+        child: ListView(
           children: <Widget>[
             Container(
               height: 4.0,
@@ -107,35 +114,10 @@ class CreateScheduleState extends State<CreateSchedule> {
                 },
               ),
             ),
-            Padding(
-                //StartDate InputField
-                padding: const EdgeInsets.all(4.0),
-                child: TextFormField(
-                  key: UniqueKey(),
-                  decoration: InputDecoration(
-                      border: OutlineInputBorder(), labelText: str_startDate),
-                  readOnly: true,
-                  controller: startDateTextController,
-                  onTap: () async {
-                    DateTime start = await selectDate(context);
-                    if (start == null) {
-                      return;
-                    }
-                    TimeOfDay startTime = await selectTime(context);
-                    if (startTime == null) {
-                      return;
-                    }
-                    actSchedule.start = DateTime(start.year, start.month,
-                        start.day, startTime.hour, startTime.minute);
-                    setState(() {
-                      startDateTextController.text =
-                          formatDate(actSchedule.start);
-                    });
-                  },
-                  validator: (value) {
-                    return valCheckEmpty(value, str_err_startDate);
-                  },
-                )),
+            Column(
+              children: actMatchDays,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+            ),
           ],
         ),
       ),
@@ -152,7 +134,6 @@ class CreateScheduleState extends State<CreateSchedule> {
                 scrollDirection: Axis.vertical,
               ),
             ),
-
           ],
         ),
       ),
@@ -240,6 +221,7 @@ class CreateScheduleState extends State<CreateSchedule> {
                       break;
                     case 1:
                       newForm = buildSetForm();
+                      actSchedule.halftimeDuration = const Duration(minutes: 0);
                       break;
                   }
                   setState(() {
@@ -260,17 +242,20 @@ class CreateScheduleState extends State<CreateSchedule> {
           appBar: AppBar(
             title: Text(str_titelCreateSchedule),
           ),
-          body: Form(
-            child: _tabs[_selectedTab],
-            key: _formKey,
+          body: SafeArea(
+            child: Form(
+              child: _tabs[_selectedTab],
+              key: _globalFormKey,
+            ),
           ),
-          resizeToAvoidBottomInset: false,
+          resizeToAvoidBottomInset: true,
           floatingActionButton: FloatingActionButton(
             child: Icon(Icons.check),
             backgroundColor: Colors.green,
             onPressed: () {
               validateTab();
               if (_tabsVal.every((e) => e)) {
+                actSchedule.configurationDone();
                 allSchedules.add(actSchedule);
                 Navigator.pop(context);
               } else {
@@ -371,7 +356,8 @@ class CreateScheduleState extends State<CreateSchedule> {
 
   ///Validates if the current Tab is filled correctly and colors the icon according to that
   void validateTab() {
-    Color newColor = (_tabsVal[_selectedTab] = _formKey.currentState.validate())
+    Color newColor = (_tabsVal[_selectedTab] =
+            _globalFormKey.currentState.validate())
         ? Colors.green
         : Colors.red;
     _tabsColor[_selectedTab] = newColor;
@@ -393,6 +379,167 @@ class CreateScheduleState extends State<CreateSchedule> {
     setState(() {
       _teams = rebuildTeams();
     });
+  }
+
+  List<Widget> buildMatchdays() {
+    List<Widget> matchdayList = [];
+    actSchedule.matchDays.forEach((acMatchDay) {
+      matchdayList.add(Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: TextFormField(
+            key: UniqueKey(),
+            decoration: InputDecoration(
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    Icons.remove_circle_outline,
+                    color: Colors.red[800],
+                  ),
+                  onPressed: () {
+                    actSchedule.matchDays
+                        .removeAt(actSchedule.matchDays.indexOf(acMatchDay));
+                    setState(() {
+                      actMatchDays = buildMatchdays();
+                    });
+                  },
+                ),
+                border: OutlineInputBorder(),
+                labelText:
+                    "$str_matchDay ${actSchedule.matchDays.indexOf(acMatchDay) + 1}"),
+            readOnly: true,
+            controller:
+                this.dateController[actSchedule.matchDays.indexOf(acMatchDay)],
+            onTap: () async {
+              if (!actSchedule.matchDays.contains(acMatchDay)) {
+                return;
+              }
+              await showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (_) => WillPopScope(
+                    onWillPop: () async => false,
+                    child: AlertDialog(
+                      title: Text(acMatchDay.name),
+                      content: Form(
+                        key: _matchDayFormKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: TextFormField(
+                                key: UniqueKey(),
+                                decoration: InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    labelText: str_date),
+                                readOnly: true,
+                                controller: this.dateController[
+                                    actSchedule.matchDays.indexOf(acMatchDay)],
+                                onTap: () async {
+                                  DateTime start = await selectDate(context);
+                                  if (start == null) {
+                                    return;
+                                  }
+                                  TimeOfDay startTime =
+                                      await selectTime(context);
+                                  if (startTime == null) {
+                                    return;
+                                  }
+                                  acMatchDay.start = DateTime(
+                                      start.year,
+                                      start.month,
+                                      start.day,
+                                      startTime.hour,
+                                      startTime.minute);
+                                  setState(() {
+                                    this
+                                        .dateController[actSchedule.matchDays
+                                            .indexOf(acMatchDay)]
+                                        .text = formatDate(acMatchDay.start);
+                                    actMatchDays = buildMatchdays();
+                                  });
+                                },
+                                validator: (value) {
+                                  return valCheckEmpty(
+                                      value, str_err_startDate);
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: TextFormField(
+                                key: _k2,
+                                inputFormatters: [
+                                  WhitelistingTextInputFormatter(
+                                      RegExp("[0-9]|^\$")),
+                                ],
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: str_fields,
+                                ),
+                                keyboardType: TextInputType.number,
+                                initialValue: (acMatchDay.fields == null)
+                                    ? ""
+                                    : acMatchDay.fields.toString(),
+                                onChanged: (value) {
+                                  if (value.isEmpty) {
+                                    acMatchDay.fields = null;
+                                  } else {
+                                    acMatchDay.fields = int.parse(value);
+                                  }
+                                },
+                                validator: (value) {
+                                  return valCheckEmpty(
+                                      value, str_err_groupQuantity_empty);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: <Widget>[
+                        FlatButton(
+                          child: Text("Löschen"),
+                          onPressed: () {
+                            setState(() {
+                              actSchedule.matchDays.remove(acMatchDay);
+                              actMatchDays = buildMatchdays();
+                            });
+                            Navigator.pop(context);
+                          },
+                        ),
+                        FlatButton(
+                          child: Text("Speichern"),
+                          onPressed: () {
+                            if (_matchDayFormKey.currentState.validate()) {
+                              Navigator.pop(context);
+                            }
+                          },
+                        )
+                      ],
+                    )),
+              );
+            },
+            validator: (value) {
+              return valCheckEmpty(value, str_err_startDate);
+            },
+          )));
+    });
+    matchdayList.add(IconButton(
+      alignment: Alignment.centerLeft,
+      icon: Icon(
+        Icons.add_circle_outline,
+        color: Colors.green[800],
+      ),
+      onPressed: () {
+        setState(() {
+          actSchedule.matchDays.add(new MatchDay(
+              null, [], "$str_matchDay ${actSchedule.matchDays.length}", 1));
+          dateController.add(new TextEditingController());
+          actMatchDays = buildMatchdays();
+        });
+      },
+    ));
+    return matchdayList;
   }
 
   ///Build Column TextFieldForms for all teams
@@ -459,7 +606,7 @@ class CreateScheduleState extends State<CreateSchedule> {
                     return new NumberPickerDialog.integer(
                       minValue: 1,
                       maxValue: 120,
-                      title: new Text( str_durationInMinutes),
+                      title: new Text(str_durationInMinutes),
                       initialIntegerValue: actSchedule.gameDuration.inMinutes,
                     );
                   }).then((int value) {
@@ -491,41 +638,45 @@ class CreateScheduleState extends State<CreateSchedule> {
             },
           ),
         ),
-        actSchedule.halftime?Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: TextFormField(
-            key: UniqueKey(),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: str_halftimeDuration,
-            ),
-            readOnly: true,
-            controller: halftimeDurationTextController,
-            onTap: () {
-              showDialog<int>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return new NumberPickerDialog.integer(
-                      minValue: 0,
-                      maxValue: 30,
-                      title: new Text( str_durationInMinutes),
-                      initialIntegerValue: actSchedule.halftimeDuration.inMinutes,
-                    );
-                  }).then((int value) {
-                if (value != null) {
-                  setState(() {
-                    actSchedule.halftimeDuration = new Duration(minutes: value);
-                    halftimeDurationTextController.text =
-                        formatDuration(actSchedule.halftimeDuration);
-                  });
-                }
-              });
-            },
-              validator: (value) {
-                return valCheckEmpty(value, str_err_halftimeDuration);
-              },
-          ),
-        ):Container(),
+        actSchedule.halftime
+            ? Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: TextFormField(
+                  key: UniqueKey(),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: str_halftimeDuration,
+                  ),
+                  readOnly: true,
+                  controller: halftimeDurationTextController,
+                  onTap: () {
+                    showDialog<int>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return new NumberPickerDialog.integer(
+                            minValue: 0,
+                            maxValue: 30,
+                            title: new Text(str_durationInMinutes),
+                            initialIntegerValue:
+                                actSchedule.halftimeDuration.inMinutes,
+                          );
+                        }).then((int value) {
+                      if (value != null) {
+                        setState(() {
+                          actSchedule.halftimeDuration =
+                              new Duration(minutes: value);
+                          halftimeDurationTextController.text =
+                              formatDuration(actSchedule.halftimeDuration);
+                        });
+                      }
+                    });
+                  },
+                  validator: (value) {
+                    return valCheckEmpty(value, str_err_halftimeDuration);
+                  },
+                ),
+              )
+            : Container(),
       ],
     );
     return timeForm;
@@ -537,87 +688,36 @@ class CreateScheduleState extends State<CreateSchedule> {
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.all(4.0),
-          child: DropdownButtonFormField(
-            key: UniqueKey(),
-            decoration: InputDecoration(
-                border: OutlineInputBorder(), labelText: str_setType),
-            value: actSchedule.setType,
-            items:
-                str_list_setType.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (newValue) {
-              setState(() {
-                actSchedule.setType = newValue;
-                actGameSettingsForm = buildSetForm();
-              });
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(4.0),
           child: TextFormField(
             key: UniqueKey(),
-            inputFormatters: [
-              WhitelistingTextInputFormatter(RegExp("[0-9]|^\$")),
-            ],
             decoration: InputDecoration(
               border: OutlineInputBorder(),
-              labelText: str_setQuantity,
+              labelText: str_guess_duration,
             ),
-            keyboardType: TextInputType.number,
-            initialValue: (actSchedule.setQuantity == null)
-                ? ""
-                : actSchedule.setQuantity.toString(),
-            onChanged: (value) {
-              if (value.isEmpty) {
-                actSchedule.setQuantity = null;
-              } else {
-                actSchedule.setQuantity = int.parse(value);
-              }
-            },
-            onEditingComplete: () {
-              setState(() {
-                actGameSettingsForm = buildSetForm();
+            readOnly: true,
+            controller: durationTextController,
+            onTap: () {
+              showDialog<int>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return new NumberPickerDialog.integer(
+                      minValue: 1,
+                      maxValue: 120,
+                      title: new Text(str_durationInMinutes),
+                      initialIntegerValue: actSchedule.gameDuration.inMinutes,
+                    );
+                  }).then((int value) {
+                if (value != null) {
+                  setState(() {
+                    actSchedule.gameDuration = new Duration(minutes: value);
+                    durationTextController.text =
+                        formatDuration(actSchedule.gameDuration);
+                  });
+                }
               });
             },
             validator: (value) {
-              return valCheckEmpty(value, str_err_setQuantity);
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(4.0),
-          child: TextFormField(
-            key: UniqueKey(),
-            inputFormatters: [
-              WhitelistingTextInputFormatter(RegExp("[0-9]|^\$")),
-            ],
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: str_pointsToWin,
-            ),
-            keyboardType: TextInputType.number,
-            initialValue: (actSchedule.pointsToWin == null)
-                ? ""
-                : actSchedule.pointsToWin.toString(),
-            onChanged: (value) {
-              if (value.isEmpty) {
-                actSchedule.pointsToWin = null;
-              } else {
-                actSchedule.pointsToWin = int.parse(value);
-              }
-            },
-            onEditingComplete: () {
-              setState(() {
-                actGameSettingsForm = buildSetForm();
-              });
-            },
-            validator: (value) {
-              return valCheckEmpty(value, str_err_pointsToWin);
+              return valCheckEmpty(value, str_err_duration);
             },
           ),
         ),
@@ -665,17 +765,14 @@ class CreateScheduleState extends State<CreateSchedule> {
                         labelText: str_groupQuantity,
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue:
-                          (actSchedule.groupQuantity == null)
-                              ? ""
-                              : actSchedule.groupQuantity
-                                  .toString(),
+                      initialValue: (actSchedule.groupQuantity == null)
+                          ? ""
+                          : actSchedule.groupQuantity.toString(),
                       onChanged: (value) {
                         if (value.isEmpty) {
                           actSchedule.groupQuantity = null;
                         } else {
-                          actSchedule.groupQuantity =
-                              int.parse(value);
+                          actSchedule.groupQuantity = int.parse(value);
                         }
                       },
                       onEditingComplete: () {
@@ -709,17 +806,14 @@ class CreateScheduleState extends State<CreateSchedule> {
                         labelText: str_koPhasesQuantity,
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue:
-                          (actSchedule.koRoundQuantity == null)
-                              ? ""
-                              : actSchedule.koRoundQuantity
-                                  .toString(),
+                      initialValue: (actSchedule.koRoundQuantity == null)
+                          ? ""
+                          : actSchedule.koRoundQuantity.toString(),
                       onChanged: (value) {
                         if (value.isEmpty) {
                           actSchedule.koRoundQuantity = null;
                         } else {
-                          actSchedule.koRoundQuantity =
-                              int.parse(value);
+                          actSchedule.koRoundQuantity = int.parse(value);
                         }
                       },
                       onEditingComplete: () {
@@ -753,16 +847,14 @@ class CreateScheduleState extends State<CreateSchedule> {
                         labelText: str_untilPlace,
                       ),
                       keyboardType: TextInputType.number,
-                      initialValue: (actSchedule.untilPlace ==
-                              null)
+                      initialValue: (actSchedule.untilPlace == null)
                           ? ""
                           : actSchedule.untilPlace.toString(),
                       onChanged: (value) {
                         if (value.isEmpty) {
                           actSchedule.untilPlace = null;
                         } else {
-                          actSchedule.untilPlace =
-                              int.parse(value);
+                          actSchedule.untilPlace = int.parse(value);
                         }
                       },
                       onEditingComplete: () {

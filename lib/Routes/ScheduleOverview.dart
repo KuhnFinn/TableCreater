@@ -92,8 +92,11 @@ class ScheduleOverviewState extends State<ScheduleOverview> {
     List<DataRow> returnRows = [];
     acMatchday.rounds.forEach((acRound) {
       acRound.fixtures.forEach((acFixture) {
+        if(acFixture==null){
+          return;
+        }
         returnRows.add(DataRow(cells: [
-          DataCell(Text("${acRound.start.hour}:${acRound.start.minute}")),
+          DataCell(Text(formatClockTime(acRound.start))),
           DataCell(Text(acFixture.team1)),
           DataCell(Padding(
             padding: const EdgeInsets.only(top: 6.0, left: 4.0, right: 4.0),

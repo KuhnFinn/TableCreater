@@ -108,22 +108,36 @@ class Graph{
   ///Returns [qunatity] subgraphes
   ///
   /// The nodes in the subgraphes should have a similar degree
-  List<Graph> getSubgraphs(int quantity){
-    int index=0;
-    List<Graph> subgraphs=[];
+  List<Graph> getSubgraphs( List<int> weight,[List<Graph> subgraphs]){
 
-    for(int i =0;i<quantity;i++){
-      List<Node> newNodes =[];
-      this.nodes.forEach((acNode){
-        newNodes.add(new Node(acNode.name));
-      });
-      subgraphs.add(Graph(newNodes,[]));
+    int index=0;
+    int completeWeight=0;
+    weight.forEach((acWeight)=>completeWeight=completeWeight+acWeight);
+    List<int> realIndex=List(completeWeight);
+    weight.forEach((acWeight) {
+      for(int i=0;i<acWeight;i++){
+        realIndex[index]=weight.indexOf(acWeight);
+        index++;
+      }
+    });
+    index =0;
+
+    if((subgraphs==null)) {
+      subgraphs = List(weight.length);
+      for (int i = 0; i < weight.length; i++) {
+        List<Node> newNodes = [];
+        this.nodes.forEach((acNode) {
+          newNodes.add(new Node(acNode.name));
+        });
+        subgraphs[i] = Graph(newNodes, []);
+      }
     }
+
     while(!isEveryEdgeMarked()){
       Node choosenFirstNode;
       Node choosenSecondNode;
-      subgraphs[index].nodes.forEach((acfirstNode){
-          if(this.nodes[subgraphs[index].nodes.indexOf(acfirstNode)].value<this.nodes.length-1){
+      subgraphs[realIndex[index]].nodes.forEach((acfirstNode){
+          if(this.nodes[subgraphs[realIndex[index]].nodes.indexOf(acfirstNode)].value<this.nodes.length-1){
             if(choosenFirstNode==null){
               choosenFirstNode=acfirstNode;
             }
@@ -132,17 +146,17 @@ class Graph{
                 choosenFirstNode=acfirstNode;
               }
               else if(acfirstNode.degree==choosenFirstNode.degree){
-                if(this.nodes[subgraphs[index].nodes.indexOf(acfirstNode)].value>this.nodes[subgraphs[index].nodes.indexOf(choosenFirstNode)].value){
+                if(this.nodes[subgraphs[realIndex[index]].nodes.indexOf(acfirstNode)].value>this.nodes[subgraphs[realIndex[index]].nodes.indexOf(choosenFirstNode)].value){
                   choosenFirstNode=acfirstNode;
                 }
               }
             }
           }
       });
-      subgraphs[index].nodes.forEach((acSecondNode){
+      subgraphs[realIndex[index]].nodes.forEach((acSecondNode){
         if(acSecondNode!=choosenFirstNode){
-          if(!getEdgeByIndex(subgraphs[index].nodes.indexOf(acSecondNode), subgraphs[index].nodes.indexOf(choosenFirstNode)).marked){
-            if(this.nodes[subgraphs[index].nodes.indexOf(acSecondNode)].value<this.nodes.length-1){
+          if(!getEdgeByIndex(subgraphs[realIndex[index]].nodes.indexOf(acSecondNode), subgraphs[realIndex[index]].nodes.indexOf(choosenFirstNode)).marked){
+            if(this.nodes[subgraphs[realIndex[index]].nodes.indexOf(acSecondNode)].value<this.nodes.length-1){
               if(choosenSecondNode==null){
                 choosenSecondNode=acSecondNode;
               }
@@ -151,7 +165,7 @@ class Graph{
                   choosenSecondNode=acSecondNode;
                 }
                 else if(acSecondNode.degree==choosenSecondNode.degree){
-                  if(this.nodes[subgraphs[index].nodes.indexOf(acSecondNode)].value>this.nodes[subgraphs[index].nodes.indexOf(choosenSecondNode)].value){
+                  if(this.nodes[subgraphs[realIndex[index]].nodes.indexOf(acSecondNode)].value>this.nodes[subgraphs[realIndex[index]].nodes.indexOf(choosenSecondNode)].value){
                     choosenSecondNode=acSecondNode;
                   }
                 }
@@ -160,9 +174,9 @@ class Graph{
           }
         }
       });
-      subgraphs[index].edges.add(new Edge(choosenFirstNode, choosenSecondNode));
-      this.markEdge(getEdgeByIndex(subgraphs[index].nodes.indexOf(choosenFirstNode), subgraphs[index].nodes.indexOf(choosenSecondNode)));
-      index =(index+1)%quantity;
+      subgraphs[realIndex[index]].edges.add(new Edge(choosenFirstNode, choosenSecondNode));
+      this.markEdge(getEdgeByIndex(subgraphs[realIndex[index]].nodes.indexOf(choosenFirstNode), subgraphs[realIndex[index]].nodes.indexOf(choosenSecondNode)));
+      index =(index+1)%completeWeight;
     }
     return subgraphs;
   }

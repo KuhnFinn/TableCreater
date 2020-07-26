@@ -4,6 +4,7 @@ class MatchDay{
   DateTime start;
   List<Round> rounds;
   String name;
+  int fields;
 
-  MatchDay(this.start, this.rounds, this.name);
+  MatchDay(this.start, this.rounds, this.name, this.fields);
 }

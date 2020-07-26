@@ -17,6 +17,8 @@ class Fixture {
   }
 
   String getWinner() {
+    this.pointsTeam1 ??=0;
+    this.pointsTeam2 ??=0;
     if (pointsTeam1 > pointsTeam2) {
       return team1;
     } else if (pointsTeam2 > pointsTeam1) {

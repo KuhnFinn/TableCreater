@@ -5,7 +5,7 @@ import 'package:flutter_app/Routes/ScheduleOverview.dart';
 import 'package:flutter_app/data/Text.dart';
 import 'package:flutter_app/Schedule/Schedule.dart';
 
-import 'Util.dart';
+import '../Util.dart';
 
 List<Schedule> allSchedules = [];
 
@@ -67,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> createCardList() {
     List<Widget> allCards = [];
     if (allSchedules.isNotEmpty) {
+      allSchedules.sort((a,b)=>a.start.compareTo(b.start));
       allSchedules.forEach((sched) {
         allCards.add(Padding(
           padding: const EdgeInsets.all(4.0),
